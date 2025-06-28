@@ -1,0 +1,69 @@
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils import executor
+import asyncio
+
+API_TOKEN = "ВАШ_ТОКЕН_БОТА"
+
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
+
+# Простая временная база
+vacancy_data = {}
+
+# Команда старт
+@dp.message_handler(commands=['start'])
+async def start_command(message: types.Message):
+    await message.answer("👋 Привет! Я помогу тебе найти сотрудников.\n\nНажми /new_vacancy чтобы создать вакансию.")
+
+# Начало создания вакансии
+@dp.message_handler(commands=['new_vacancy'])
+async def create_vacancy(message: types.Message):
+    vacancy_data[message.from_user.id] = {}
+    await message.answer("🧑‍🍳 Укажи должность (например, Бариста):")
+    await asyncio.sleep(0.5)
+    return
+
+# Обработка всех сообщений (по шагам)
+@dp.message_handler()
+async def handle_input(message: types.Message):
+    user_id = message.from_user.id
+    if user_id not in vacancy_data:
+        await message.answer("Нажми /new_vacancy чтобы создать вакансию.")
+        return
+
+    user_vacancy = vacancy_data[user_id]
+
+    if 'position' not in user_vacancy:
+        user_vacancy['position'] = message.text
+        await message.answer("📍 Укажи город и район:")
+    elif 'location' not in user_vacancy:
+        user_vacancy['location'] = message.text
+        await message.answer("🕒 Укажи график работы (например, 5/2, сменный):")
+    elif 'schedule' not in user_vacancy:
+        user_vacancy['schedule'] = message.text
+        await message.answer("💰 Укажи з/п (например, 45000):")
+    elif 'salary' not in user_vacancy:
+        user_vacancy['salary'] = message.text
+
+        # Финальное подтверждение
+        summary = f"""✅ Вакансия создана:
+
+📌 Должность: {user_vacancy['position']}
+📍 Район: {user_vacancy['location']}
+🕒 График: {user_vacancy['schedule']}
+💰 З/п: {user_vacancy['salary']} ₽
+
+Скоро начну поиск кандидатов...
+"""
+        await message.answer(summary)
+
+        # Здесь можно сохранить в файл или отправить в Google Sheets
+        with open("vacancies.csv", "a", encoding="utf-8") as f:
+            f.write(f"{user_vacancy['position']},{user_vacancy['location']},{user_vacancy['schedule']},{user_vacancy['salary']}\n")
+
+        vacancy_data.pop(user_id)
+
+# Запуск
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
