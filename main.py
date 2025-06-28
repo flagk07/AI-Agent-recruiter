@@ -4,7 +4,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils import executor
 import asyncio
 
-API_TOKEN = "ВАШ_ТОКЕН_БОТА"
+API_TOKEN = "7196071105:AAFaUCMokgmNFIeNMmueqWgTroS4hMp9v8M"
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
